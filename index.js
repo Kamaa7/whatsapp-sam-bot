@@ -7,7 +7,7 @@ const twilio = require('twilio');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials
+// Twilio Credentials from .env
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
@@ -30,40 +30,51 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // Send to Vapi
+    // Send the message to Vapi
     const vapiResponse = await axios.post(
       VAPI_ENDPOINT,
       {
         assistantId: ASSISTANT_ID,
-        input: incomingMessage,
+        input: incomingMessage
       },
       {
         headers: {
           Authorization: `Bearer ${VAPI_PRIVATE_KEY}`,
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       }
     );
 
-    const aiReply = vapiResponse.data.reply || "Sorry, I couldn't understand.";
+    // Correctly parse the assistant's response
+    let aiReply = "Sorry, I couldn't understand.";
+
+    if (vapiResponse.data && Array.isArray(vapiResponse.data.messages)) {
+      const assistantMessage = vapiResponse.data.messages.find(
+        (m) => m.role === 'assistant' && m.content
+      );
+
+      if (assistantMessage) {
+        aiReply = assistantMessage.content;
+      }
+    }
 
     console.log('AI Reply:', aiReply);
 
-    // Send back to WhatsApp
+    // Send the AI's reply back via Twilio WhatsApp
     await client.messages.create({
       body: aiReply,
       from: 'whatsapp:+14155238886',
-      to: fromNumber,
+      to: fromNumber
     });
 
     res.status(200).end();
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error('Error communicating with Vapi or Twilio:', error.response?.data || error.message);
     res.status(500).send('Error processing the message.');
   }
 });
 
-// Start server
+// Start the server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

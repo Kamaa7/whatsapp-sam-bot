@@ -1,5 +1,3 @@
-// index.js
-
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -32,17 +30,12 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // Send message to VAPI
+    // Send to Vapi
     const vapiResponse = await axios.post(
       VAPI_ENDPOINT,
       {
         assistantId: ASSISTANT_ID,
-        messages: [
-          {
-            role: 'user',
-            content: incomingMessage,
-          },
-        ],
+        input: incomingMessage,
       },
       {
         headers: {
@@ -56,7 +49,7 @@ app.post('/whatsapp', async (req, res) => {
 
     console.log('AI Reply:', aiReply);
 
-    // Send reply via Twilio WhatsApp
+    // Send back to WhatsApp
     await client.messages.create({
       body: aiReply,
       from: 'whatsapp:+14155238886',
@@ -70,7 +63,7 @@ app.post('/whatsapp', async (req, res) => {
   }
 });
 
-// Start the server
+// Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

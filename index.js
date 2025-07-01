@@ -7,15 +7,14 @@ const twilio = require('twilio');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials (load from environment)
+// Twilio Credentials
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
-// Vapi Config (load from environment)
+// Vapi Config
 const VAPI_PRIVATE_KEY = process.env.VAPI_PRIVATE_KEY;
 const ASSISTANT_ID = '7d6e2303-fecc-4a32-bf2c-d3479916ad33';
-const KNOWLEDGE_BASE_ID = '4040947b-8a58-4355-b700-affb341be65b';
 const VAPI_ENDPOINT = 'https://api.vapi.ai/chat';
 
 // Health Check
@@ -31,13 +30,12 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // Send to Vapi
+    // Send to Vapi (without knowledgeBaseId)
     const vapiResponse = await axios.post(
       VAPI_ENDPOINT,
       {
         assistantId: ASSISTANT_ID,
-        input: incomingMessage,
-        knowledgeBaseId: KNOWLEDGE_BASE_ID
+        input: incomingMessage
       },
       {
         headers: {

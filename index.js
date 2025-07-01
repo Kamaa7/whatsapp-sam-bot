@@ -9,7 +9,7 @@ const twilio = require('twilio');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials (from Render env vars)
+// Twilio Credentials
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
@@ -17,7 +17,7 @@ const client = twilio(accountSid, authToken);
 // Vapi Config
 const VAPI_PRIVATE_KEY = process.env.VAPI_PRIVATE_KEY;
 const ASSISTANT_ID = '594f1ee4-bf5c-4205-bcaf-61f985c5afbc';
-const VAPI_ENDPOINT = `https://api.vapi.ai/assistants/${ASSISTANT_ID}/chat`;
+const VAPI_ENDPOINT = `https://api.vapi.ai/chat`;
 
 // Health Check
 app.get('/', (req, res) => {
@@ -32,16 +32,17 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // 1️⃣ Send the incoming message to VAPI
+    // Send message to VAPI
     const vapiResponse = await axios.post(
       VAPI_ENDPOINT,
       {
+        assistantId: ASSISTANT_ID,
         messages: [
           {
             role: 'user',
-            content: incomingMessage
-          }
-        ]
+            content: incomingMessage,
+          },
+        ],
       },
       {
         headers: {
@@ -51,12 +52,11 @@ app.post('/whatsapp', async (req, res) => {
       }
     );
 
-    // 2️⃣ Get the AI's reply
     const aiReply = vapiResponse.data.reply || "Sorry, I couldn't understand.";
 
     console.log('AI Reply:', aiReply);
 
-    // 3️⃣ Send reply back via Twilio WhatsApp
+    // Send reply via Twilio WhatsApp
     await client.messages.create({
       body: aiReply,
       from: 'whatsapp:+14155238886',
@@ -65,7 +65,7 @@ app.post('/whatsapp', async (req, res) => {
 
     res.status(200).end();
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', error.response?.data || error.message);
     res.status(500).send('Error processing the message.');
   }
 });

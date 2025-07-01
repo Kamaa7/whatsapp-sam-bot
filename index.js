@@ -17,7 +17,7 @@ const client = twilio(accountSid, authToken);
 // Vapi Config
 const VAPI_PRIVATE_KEY = process.env.VAPI_PRIVATE_KEY;
 const ASSISTANT_ID = '0ed118a4-d783-4cb7-894d-69cd0eea7e3d';
-const VAPI_ENDPOINT = `https://api.vapi.ai/assistant/${ASSISTANT_ID}/chat`;
+const VAPI_ENDPOINT = `https://api.vapi.ai/assistants/${ASSISTANT_ID}/chat`;
 
 // Health Check
 app.get('/', (req, res) => {

@@ -1,5 +1,6 @@
 // index.js
 
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -8,13 +9,13 @@ const twilio = require('twilio');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials (replace these with your real ones)
-const accountSid = 'AC338b734314a41b1d0d65c6c96f186952';
-const authToken = '3de0091c39fd943caf7c35672b2c2274';
+// Twilio Credentials (use your real ones or from Render env vars)
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
 // Vapi Config
-const VAPI_PRIVATE_KEY = 'YOUR_VAPI_PRIVATE_KEY';
+const VAPI_PRIVATE_KEY = process.env.VAPI_PRIVATE_KEY;
 const ASSISTANT_ID = '0ed118a4-d783-4cb7-894d-69cd0eea7e3d';
 const VAPI_ENDPOINT = `https://api.vapi.ai/assistant/${ASSISTANT_ID}/chat`;
 
@@ -37,7 +38,7 @@ app.post('/whatsapp', async (req, res) => {
       { message: incomingMessage },
       {
         headers: {
-          Authorization: `Bearer ${c77f6f13-afe8-4748-baaa-39d0000e6172}`,
+          Authorization: `Bearer ${VAPI_PRIVATE_KEY}`,
           'Content-Type': 'application/json',
         },
       }
@@ -67,4 +68,3 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-

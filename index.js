@@ -14,7 +14,7 @@ const client = twilio(accountSid, authToken);
 
 // Vapi Config
 const VAPI_PRIVATE_KEY = process.env.VAPI_PRIVATE_KEY;
-const ASSISTANT_ID = '7d6e2303-fecc-4a32-bf2c-d3479916ad33';
+const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID;
 const VAPI_ENDPOINT = 'https://api.vapi.ai/chat';
 
 // Health Check
@@ -30,12 +30,12 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // Send to Vapi (without knowledgeBaseId)
+    // Call Vapi
     const vapiResponse = await axios.post(
       VAPI_ENDPOINT,
       {
         assistantId: ASSISTANT_ID,
-        input: incomingMessage
+        input: incomingMessage,
       },
       {
         headers: {
@@ -46,7 +46,6 @@ app.post('/whatsapp', async (req, res) => {
     );
 
     const aiReply = vapiResponse.data.reply || "Sorry, I couldn't understand.";
-
     console.log('AI Reply:', aiReply);
 
     // Send back to WhatsApp

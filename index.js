@@ -3,19 +3,27 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const twilio = require('twilio');
+const { OpenAI } = require('openai');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials
+// Twilio
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
-// Vapi Config
-const VAPI_PRIVATE_KEY = process.env.VAPI_PRIVATE_KEY;
-const ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID;
-const VAPI_ENDPOINT = 'https://api.vapi.ai/chat';
+// OpenAI
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Your Knowledge Base
+const KNOWLEDGE_BASE = `
+Kishnani Associates offers the following services:
+- Taxation (ITR filing, GST registration, GST returns, advisory)
+- Compliance (ROC filings, company incorporation)
+- Auditing (internal, statutory)
+- Financial & legal consulting (NRI/HNI support)
+`;
 
 // Health Check
 app.get('/', (req, res) => {
@@ -30,25 +38,18 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // Call Vapi
-    const vapiResponse = await axios.post(
-      VAPI_ENDPOINT,
-      {
-        assistantId: ASSISTANT_ID,
-        input: incomingMessage,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${VAPI_PRIVATE_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o", 
+      messages: [
+        { role: "system", content: `You are a professional assistant for Kishnani Associates. Use this knowledge base to answer: ${KNOWLEDGE_BASE}` },
+        { role: "user", content: incomingMessage }
+      ]
+    });
 
-    const aiReply = vapiResponse.data.reply || "Sorry, I couldn't understand.";
+    const aiReply = completion.choices[0].message.content.trim();
+
     console.log('AI Reply:', aiReply);
 
-    // Send back to WhatsApp
     await client.messages.create({
       body: aiReply,
       from: 'whatsapp:+14155238886',

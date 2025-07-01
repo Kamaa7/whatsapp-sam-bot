@@ -9,7 +9,7 @@ const twilio = require('twilio');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials (use your real ones or from Render env vars)
+// Twilio Credentials (from Render env vars)
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
@@ -35,7 +35,14 @@ app.post('/whatsapp', async (req, res) => {
     // 1️⃣ Send the incoming message to VAPI
     const vapiResponse = await axios.post(
       VAPI_ENDPOINT,
-      { message: incomingMessage },
+      {
+        messages: [
+          {
+            role: 'user',
+            content: incomingMessage
+          }
+        ]
+      },
       {
         headers: {
           Authorization: `Bearer ${VAPI_PRIVATE_KEY}`,

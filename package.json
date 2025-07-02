@@ -1,7 +1,7 @@
 {
   "name": "whatsapp-sam-bot",
   "version": "1.0.0",
-  "description": "Simple WhatsApp bot that talks to Sam AI",
+  "description": "Simple WhatsApp bot with Together AI",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

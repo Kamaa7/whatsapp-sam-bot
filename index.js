@@ -7,18 +7,12 @@ const twilio = require('twilio');
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = twilio(accountSid, authToken);
+// Twilio setup
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// Together AI
-const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
-const TOGETHER_ENDPOINT = 'https://api.together.xyz/v1/chat/completions';
-
-// Your Knowledge Base
+// Your knowledge base
 const KNOWLEDGE_BASE = `
-Kishnani Associates offers the following services:
+Kishnani Associates offers:
 - Taxation (ITR filing, GST registration, GST returns, advisory)
 - Compliance (ROC filings, company incorporation)
 - Auditing (internal, statutory)
@@ -38,14 +32,15 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    const response = await axios.post(
-      TOGETHER_ENDPOINT,
+    // Together AI call
+    const togetherResponse = await axios.post(
+      'https://api.together.xyz/v1/chat/completions',
       {
-        model: "mistralai/Mixtral-8x7B-Instruct-v0.1", // or any Together-supported model!
+        model: "togethercomputer/llama-2-7b-chat",  // Choose any available Together model
         messages: [
           {
             role: "system",
-            content: `You are a professional assistant for Kishnani Associates. Use this knowledge base to answer questions as helpfully as possible: ${KNOWLEDGE_BASE}`
+            content: `You are a professional assistant for Kishnani Associates. Use ONLY this knowledge to answer: ${KNOWLEDGE_BASE}`
           },
           {
             role: "user",
@@ -55,23 +50,24 @@ app.post('/whatsapp', async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Bearer ${TOGETHER_API_KEY}`,
+          "Authorization": `Bearer ${process.env.TOGETHER_API_KEY}`,
           "Content-Type": "application/json"
         }
       }
     );
 
-    const aiReply = response.data.choices[0].message.content.trim();
-
+    const aiReply = togetherResponse.data.choices[0].message.content.trim();
     console.log('AI Reply:', aiReply);
 
+    // Send WhatsApp reply via Twilio
     await client.messages.create({
       body: aiReply,
-      from: 'whatsapp:+14155238886',
+      from: 'whatsapp:+14155238886',  // Default Twilio sandbox number
       to: fromNumber,
     });
 
     res.status(200).end();
+
   } catch (error) {
     console.error('Error:', error.response?.data || error.message);
     res.status(500).send('Error processing the message.');
@@ -79,7 +75,7 @@ app.post('/whatsapp', async (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

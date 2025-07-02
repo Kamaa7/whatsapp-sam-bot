@@ -1,26 +1,22 @@
-// index.js
-
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const twilio = require('twilio');
-const { OpenAI } = require('openai');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Twilio Credentials
+// Twilio
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
-// OpenAI Setup
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Together AI
+const TOGETHER_API_KEY = process.env.TOGETHER_API_KEY;
+const TOGETHER_ENDPOINT = 'https://api.together.xyz/v1/chat/completions';
 
-// Static Knowledge Base
+// Your Knowledge Base
 const KNOWLEDGE_BASE = `
 Kishnani Associates offers the following services:
 - Taxation (ITR filing, GST registration, GST returns, advisory)
@@ -29,12 +25,12 @@ Kishnani Associates offers the following services:
 - Financial & legal consulting (NRI/HNI support)
 `;
 
-// Health Check Route
+// Health Check
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });
 
-// WhatsApp Webhook Handler
+// WhatsApp Webhook
 app.post('/whatsapp', async (req, res) => {
   const incomingMessage = req.body.Body;
   const fromNumber = req.body.From;
@@ -42,29 +38,37 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are a helpful and professional assistant for a CA firm named Kishnani Associates. Use the following knowledge base to answer questions accurately:\n\n${KNOWLEDGE_BASE}`
-        },
-        {
-          role: "user",
-          content: incomingMessage
+    const response = await axios.post(
+      TOGETHER_ENDPOINT,
+      {
+        model: "mistralai/Mixtral-8x7B-Instruct-v0.1", // or any Together-supported model!
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional assistant for Kishnani Associates. Use this knowledge base to answer questions as helpfully as possible: ${KNOWLEDGE_BASE}`
+          },
+          {
+            role: "user",
+            content: incomingMessage
+          }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${TOGETHER_API_KEY}`,
+          "Content-Type": "application/json"
         }
-      ]
-    });
+      }
+    );
 
-    const aiReply = response.choices[0].message.content.trim();
+    const aiReply = response.data.choices[0].message.content.trim();
 
     console.log('AI Reply:', aiReply);
 
-    // Send reply on WhatsApp
     await client.messages.create({
       body: aiReply,
-      from: 'whatsapp:+14155238886', // Twilio sandbox or purchased number
-      to: fromNumber
+      from: 'whatsapp:+14155238886',
+      to: fromNumber,
     });
 
     res.status(200).end();
@@ -74,7 +78,7 @@ app.post('/whatsapp', async (req, res) => {
   }
 });
 
-// Start Server
+// Start server
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

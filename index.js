@@ -10,7 +10,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // Twilio setup
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// Your knowledge base
+// Knowledge base
 const KNOWLEDGE_BASE = `
 Kishnani Associates offers:
 - Taxation (ITR filing, GST registration, GST returns, advisory)
@@ -32,11 +32,10 @@ app.post('/whatsapp', async (req, res) => {
   console.log('Incoming message:', incomingMessage);
 
   try {
-    // Together AI call
     const togetherResponse = await axios.post(
       'https://api.together.xyz/v1/chat/completions',
       {
-        model: "togethercomputer/llama-2-7b-chat",  // Choose any available Together model
+        model: "mistralai/Mistral-7B-Instruct-v0.2",  // ✅ SERVERLESS MODEL
         messages: [
           {
             role: "system",
@@ -59,10 +58,9 @@ app.post('/whatsapp', async (req, res) => {
     const aiReply = togetherResponse.data.choices[0].message.content.trim();
     console.log('AI Reply:', aiReply);
 
-    // Send WhatsApp reply via Twilio
     await client.messages.create({
       body: aiReply,
-      from: 'whatsapp:+14155238886',  // Default Twilio sandbox number
+      from: 'whatsapp:+14155238886',
       to: fromNumber,
     });
 

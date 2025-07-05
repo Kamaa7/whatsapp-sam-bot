@@ -76,6 +76,9 @@ Kishnani Associates, led by CA Gagan Gupta, offers full-spectrum financial and l
 ✅ Human Assistance:
 - For urgent or complex matters, chatbot connects you to CA Gagan Gupta directly via call or email
 
+✅ Schedule a Meeting:
+- You can easily book a meeting with CA Gagan Gupta here: https://calendly.com/kamaalbarkaat/30min
+
 ✅ Contact:
 - WhatsApp: +91 83779 00058 (start by sending "Hi")
 - Direct call: +91 9899511905
